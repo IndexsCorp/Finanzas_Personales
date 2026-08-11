@@ -25,11 +25,11 @@
   </header>
 
   <!-- CONTENEDOR PRINCIPAL (Vacíos, se llenarán con fetch) -->
-  <main class="flex-1 overflow-y-auto w-full relative">
-    <div id="vista-dashboard" class="vista-app absolute w-full h-full p-4 transition-opacity duration-300 hidden opacity-0"></div>
-    <div id="vista-registros" class="vista-app absolute w-full h-full p-4 hidden opacity-0 transition-opacity duration-300"></div>
-    <div id="vista-planificacion" class="vista-app absolute w-full h-full p-4 hidden opacity-0 transition-opacity duration-300"></div>
-    <div id="vista-compras" class="vista-app absolute w-full h-full p-4 hidden opacity-0 transition-opacity duration-300"></div>
+  <main class="flex-1 w-full relative overflow-hidden">
+    <div id="vista-dashboard" class="vista-app absolute inset-0 w-full h-full overflow-y-auto p-4 pb-32 transition-opacity duration-300 hidden opacity-0"></div>
+    <div id="vista-registros" class="vista-app absolute inset-0 w-full h-full overflow-y-auto p-4 pb-32 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="vista-planificacion" class="vista-app absolute inset-0 w-full h-full overflow-y-auto p-4 pb-32 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="vista-compras" class="vista-app absolute inset-0 w-full h-full overflow-y-auto p-4 pb-32 hidden opacity-0 transition-opacity duration-300"></div>
   </main>
 
   <!-- MODALES INYECTADOS -->
