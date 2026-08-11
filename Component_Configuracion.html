@@ -1,0 +1,234 @@
+<div id="modal-configuracion" class="hidden fixed inset-0 z-50 flex flex-col h-full w-full bg-gray-50 transition-transform transform translate-y-full duration-300">
+  
+  <!-- Cabecera -->
+  <div class="bg-emerald-600 text-white px-5 py-4 flex justify-between items-center shadow-md">
+    <h2 class="text-xl font-bold"><i class="fas fa-cog mr-2"></i>Configuración</h2>
+    <button onclick="cerrarConfiguracion()" class="text-white text-2xl active:scale-90 transition"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- Pestañas -->
+  <div class="flex bg-white shadow-sm">
+    <button id="tab-conf-ctas" onclick="switchTabConf('cuentas')" class="flex-1 py-3 text-sm font-bold text-emerald-600 border-b-2 border-emerald-600">Cuentas</button>
+    <button id="tab-conf-cats" onclick="switchTabConf('categorias')" class="flex-1 py-3 text-sm font-bold text-gray-500 border-b-2 border-transparent">Categorías</button>
+  </div>
+
+  <!-- Contenido -->
+  <div class="flex-1 overflow-y-auto p-4 relative pb-24">
+    
+    <div id="config-loader" class="absolute inset-0 bg-gray-50 z-10 flex flex-col items-center justify-center hidden">
+      <i class="fas fa-circle-notch fa-spin text-3xl text-emerald-600 mb-2"></i>
+      <p class="text-sm text-gray-500">Sincronizando...</p>
+    </div>
+
+    <!-- SECCIÓN CUENTAS -->
+    <div id="sec-conf-cuentas" class="block space-y-6">
+      
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Añadir Nueva Cuenta</h3>
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex gap-2 items-center">
+          <input type="text" id="new-cta-name" placeholder="Ej. Yape" class="bg-gray-50 border p-2 rounded-lg flex-1 text-sm outline-none">
+          <select id="new-cta-tipo" class="bg-gray-50 border p-2 rounded-lg text-sm outline-none">
+            <option>Débito</option><option>Crédito</option><option>Meta</option>
+          </select>
+          <input type="color" id="new-cta-color" value="#10b981" class="h-9 w-9 rounded cursor-pointer border-0 p-0">
+          <button onclick="agregarNuevaCuenta()" class="bg-emerald-600 text-white w-9 h-9 rounded-lg hover:bg-emerald-700 shadow flex items-center justify-center"><i class="fas fa-plus"></i></button>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider flex justify-between items-center">
+          Tus Cuentas
+          <button id="btn-save-cuentas" onclick="enviarColoresCuentas()" class="hidden bg-blue-600 text-white px-3 py-1 rounded shadow text-[10px]">Guardar Cambios</button>
+        </h3>
+        <div id="lista-cuentas-config" class="space-y-2 pb-20"></div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN CATEGORÍAS -->
+    <div id="sec-conf-categorias" class="hidden space-y-6">
+      
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Añadir Subcategoría</h3>
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2">
+          <div class="flex gap-2">
+            <select id="new-cat-clase" class="bg-gray-50 border p-2 rounded-lg text-sm outline-none w-1/3">
+              <option>Egreso</option><option>Ingreso</option>
+            </select>
+            <input type="text" id="new-cat-principal" placeholder="Cat. Principal (Ej. Transporte)" class="bg-gray-50 border p-2 rounded-lg flex-1 text-sm outline-none">
+          </div>
+          <div class="flex gap-2 items-center">
+            <input type="text" id="new-cat-sub" placeholder="Subcategoría (Ej. Uber)" class="bg-gray-50 border p-2 rounded-lg flex-1 text-sm outline-none">
+            <input type="color" id="new-cat-color" value="#f59e0b" class="h-9 w-9 rounded cursor-pointer border-0 p-0">
+            <button onclick="agregarNuevaCategoria()" class="bg-emerald-600 text-white w-9 h-9 rounded-lg hover:bg-emerald-700 shadow flex items-center justify-center"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider flex justify-between items-center">
+          Tus Categorías
+          <button id="btn-save-cats" onclick="enviarColoresCategorias()" class="hidden bg-blue-600 text-white px-3 py-1 rounded shadow text-[10px]">Guardar Cambios</button>
+        </h3>
+        <div id="lista-categorias-config" class="space-y-2 pb-20"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // ¡PEGAR TU URL AQUÍ ABAJO!
+  const API_URL_CONFIG = "https://script.google.com/macros/s/AKfycbxp4ySSgMGAM47n1Be12Hwo2hmWNWfYLQbk5ERleidhNXnpNZU2kEbq5r64W_eL6Lsd/exec";
+  
+  let currentCuentas = [];
+  let currentCategorias = [];
+  
+  // Memoria temporal para colores no guardados
+  let coloresModificadosCtas = {}; 
+  let coloresModificadosCats = {};
+
+  function abrirConfiguracion() {
+    const modal = document.getElementById('modal-configuracion');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.remove('translate-y-full'), 10);
+    cargarDatosConfiguracion();
+  }
+
+  function cerrarConfiguracion() {
+    const modal = document.getElementById('modal-configuracion');
+    modal.classList.add('translate-y-full');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+    if(typeof cargarDatosDashboard === "function") cargarDatosDashboard();
+  }
+
+  function switchTabConf(tab) {
+    const isCtas = tab === 'cuentas';
+    document.getElementById('sec-conf-cuentas').classList.toggle('hidden', !isCtas);
+    document.getElementById('sec-conf-categorias').classList.toggle('hidden', isCtas);
+    document.getElementById('tab-conf-ctas').className = isCtas ? "flex-1 py-3 text-sm font-bold text-emerald-600 border-b-2 border-emerald-600" : "flex-1 py-3 text-sm font-bold text-gray-500 border-b-2 border-transparent";
+    document.getElementById('tab-conf-cats').className = !isCtas ? "flex-1 py-3 text-sm font-bold text-emerald-600 border-b-2 border-emerald-600" : "flex-1 py-3 text-sm font-bold text-gray-500 border-b-2 border-transparent";
+  }
+
+  function toggleLoaderConfig(show) {
+    document.getElementById('config-loader').classList.toggle('hidden', !show);
+  }
+
+  async function cargarDatosConfiguracion() {
+    toggleLoaderConfig(true);
+    coloresModificadosCtas = {}; // Limpiamos memoria
+    coloresModificadosCats = {};
+    document.getElementById('btn-save-cuentas').classList.add('hidden');
+    document.getElementById('btn-save-cats').classList.add('hidden');
+
+    try {
+      const peticion = { action: "obtenerDatosIniciales" }; 
+      const resp = await fetch(API_URL_CONFIG, { method: 'POST', body: JSON.stringify(peticion), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+      const json = await resp.json();
+      if (json.estado === "exito") {
+        currentCuentas = json.cuentas;
+        currentCategorias = json.categorias;
+        dibujarListaCuentas();
+        dibujarListaCategorias();
+      }
+    } catch (e) { console.error(e); }
+    toggleLoaderConfig(false);
+  }
+
+  function dibujarListaCuentas() {
+    const contenedor = document.getElementById('lista-cuentas-config');
+    contenedor.innerHTML = '';
+    currentCuentas.forEach(cta => {
+      contenedor.innerHTML += `
+        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-3">
+          <div class="flex-1 overflow-hidden">
+            <p class="font-bold text-gray-800 text-sm truncate">${cta.nombre}</p>
+            <p class="text-xs text-gray-400">${cta.tipo}</p>
+          </div>
+          <input type="color" value="${cta.color}" onchange="registrarCambioColorCta('${cta.nombre}', this.value)" class="h-8 w-8 rounded cursor-pointer border-0 p-0">
+          <button onclick="borrarCuenta('${cta.nombre}')" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      `;
+    });
+  }
+
+  function dibujarListaCategorias() {
+    const contenedor = document.getElementById('lista-categorias-config');
+    contenedor.innerHTML = '';
+    
+    currentCategorias.sort((a, b) => a.clase.localeCompare(b.clase)).forEach(cat => {
+      const isEgreso = cat.clase === 'Egreso';
+      const bgBadge = isEgreso ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600';
+      const idUnico = cat.principal + '|' + cat.sub; // Clave única para el diccionario
+      
+      contenedor.innerHTML += `
+        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-3">
+          <div class="flex-1 overflow-hidden flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${bgBadge}">${cat.clase}</span>
+              <span class="text-xs text-gray-500 font-bold truncate">${cat.principal}</span>
+            </div>
+            <p class="font-semibold text-gray-800 text-sm truncate">${cat.sub}</p>
+          </div>
+          <input type="color" value="${cat.color}" onchange="registrarCambioColorCat('${cat.principal}', '${cat.sub}', this.value)" class="h-8 w-8 rounded cursor-pointer border-0 p-0">
+          <button onclick="borrarCategoria('${cat.principal}', '${cat.sub}')" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      `;
+    });
+  }
+
+  // --- LÓGICA DE GUARDADO EN BÚFER (Memoria) ---
+  function registrarCambioColorCta(nombre, color) {
+    coloresModificadosCtas[nombre] = color;
+    document.getElementById('btn-save-cuentas').classList.remove('hidden');
+  }
+
+  function registrarCambioColorCat(prin, sub, color) {
+    coloresModificadosCats[`${prin}|${sub}`] = { principal: prin, subcategoria: sub, color: color };
+    document.getElementById('btn-save-cats').classList.remove('hidden');
+  }
+
+  // --- EJECUCIÓN HACIA SHEETS ---
+  async function ejecutarPeticion(payload) {
+    toggleLoaderConfig(true);
+    try {
+      const resp = await fetch(API_URL_CONFIG, { method: 'POST', body: JSON.stringify({ action: "modificarConfiguracion", datos: payload }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+      const json = await resp.json();
+      if(json.estado === "exito") await cargarDatosConfiguracion();
+      else alert(json.error || "Error al procesar");
+    } catch (e) { alert("Error de conexión."); }
+    toggleLoaderConfig(false);
+  }
+
+  function enviarColoresCuentas() {
+    const items = Object.keys(coloresModificadosCtas).map(nombre => ({ nombre: nombre, color: coloresModificadosCtas[nombre] }));
+    ejecutarPeticion({ tipo: 'cuenta', accion: 'guardarColores', items: items });
+  }
+
+  function enviarColoresCategorias() {
+    const items = Object.values(coloresModificadosCats);
+    ejecutarPeticion({ tipo: 'categoria', accion: 'guardarColores', items: items });
+  }
+
+  function agregarNuevaCuenta() {
+    const nombre = document.getElementById('new-cta-name').value.trim();
+    if (!nombre) return alert("Ponle un nombre a la cuenta.");
+    ejecutarPeticion({ tipo: 'cuenta', accion: 'agregar', item: { nombre: nombre, tipoCuenta: document.getElementById('new-cta-tipo').value, color: document.getElementById('new-cta-color').value }});
+    document.getElementById('new-cta-name').value = '';
+  }
+
+  function borrarCuenta(nombre) {
+    if(confirm(`¿Eliminar cuenta '${nombre}'?`)) ejecutarPeticion({ tipo: 'cuenta', accion: 'eliminar', item: { nombre: nombre } });
+  }
+
+  function agregarNuevaCategoria() {
+    const prin = document.getElementById('new-cat-principal').value.trim();
+    const sub = document.getElementById('new-cat-sub').value.trim();
+    if (!prin || !sub) return alert("Llena ambos campos.");
+    ejecutarPeticion({ tipo: 'categoria', accion: 'agregar', item: { clase: document.getElementById('new-cat-clase').value, principal: prin, subcategoria: sub, color: document.getElementById('new-cat-color').value }});
+    document.getElementById('new-cat-sub').value = '';
+  }
+
+  function borrarCategoria(prin, sub) {
+    if(confirm(`¿Eliminar subcategoría '${sub}'?`)) ejecutarPeticion({ tipo: 'categoria', accion: 'eliminar', item: { principal: prin, subcategoria: sub } });
+  }
+</script>

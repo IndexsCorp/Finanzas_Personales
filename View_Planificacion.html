@@ -1,0 +1,263 @@
+<!-- Cabecera de la Vista -->
+<section class="mb-4">
+  <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div>
+      <h2 class="text-gray-800 font-bold text-lg">Planificación</h2>
+      <p class="text-xs text-gray-400">Presupuestos, Metas y Pagos</p>
+    </div>
+    <div class="bg-emerald-100 text-emerald-600 p-2 rounded-lg cursor-pointer hover:bg-emerald-200 transition" onclick="cargarPlanificacion()">
+      <i class="fas fa-sync-alt"></i>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN: Presupuestos -->
+<section class="mb-6">
+  <div class="flex justify-between items-center mb-3 ml-1">
+     <h3 class="text-sm font-bold text-gray-700">Presupuestos</h3>
+     <button onclick="toggleForm('form-nuevo-presupuesto')" class="text-xs bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-full hover:bg-emerald-200 transition"><i class="fas fa-plus mr-1"></i>Nuevo</button>
+  </div>
+  
+  <div id="form-nuevo-presupuesto" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-emerald-200 mb-4 transition-all space-y-3">
+     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nuevo Presupuesto</h4>
+     <input type="month" id="pre-periodo" class="w-full p-3 bg-gray-50 border rounded-lg text-sm outline-none">
+     <div class="flex gap-2">
+       <select id="pre-principal" onchange="filtrarSubcategoriasPlan('pre-principal', 'pre-sub', 'Egreso')" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Categoría</option></select>
+       <select id="pre-sub" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Subcategoría</option></select>
+     </div>
+     <div class="relative w-full">
+       <span class="absolute left-3 top-3 text-gray-400 text-sm">S/</span>
+       <input type="number" id="pre-limite" placeholder="Límite Máximo" class="w-full p-3 pl-8 bg-gray-50 border rounded-lg text-sm outline-none">
+     </div>
+     <button onclick="guardarPresupuesto(this)" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-emerald-700 text-sm"><i class="fas fa-save mr-2"></i>Guardar</button>
+  </div>
+  
+  <div id="lista-presupuestos" class="space-y-4"></div>
+</section>
+
+<!-- SECCIÓN: Pagos Planificados -->
+<section class="mb-6">
+  <div class="flex justify-between items-center mb-3 ml-1">
+     <h3 class="text-sm font-bold text-gray-700">Pagos Planificados</h3>
+     <button onclick="toggleForm('form-nuevo-pago')" class="text-xs bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-full hover:bg-emerald-200 transition"><i class="fas fa-plus mr-1"></i>Nuevo</button>
+  </div>
+  
+  <div id="form-nuevo-pago" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-emerald-200 mb-4 transition-all space-y-3">
+     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nuevo Pago</h4>
+     <select id="pag-tipo" onchange="cambiarTipoPagoPlan()" class="w-full p-3 bg-gray-50 border rounded-lg text-sm font-bold text-gray-700 outline-none">
+       <option value="Egreso">Egreso</option><option value="Ingreso">Ingreso</option><option value="Transferencia">Transferencia</option>
+     </select>
+     <div class="flex gap-2">
+       <select id="pag-origen" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Origen</option></select>
+       <select id="pag-destino" class="hidden w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Destino</option></select>
+     </div>
+     <div class="flex gap-2">
+       <select id="pag-principal" onchange="filtrarSubcategoriasPlan('pag-principal', 'pag-sub', document.getElementById('pag-tipo').value)" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Categoría</option></select>
+       <select id="pag-sub" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Subcategoría</option></select>
+     </div>
+     <div class="flex gap-2">
+       <div class="relative w-1/2"><span class="absolute left-3 top-3 text-gray-400 text-sm">S/</span><input type="number" id="pag-monto" placeholder="Monto" class="w-full p-3 pl-8 bg-gray-50 border rounded-lg text-sm outline-none"></div>
+       <input type="date" id="pag-fecha" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 outline-none">
+     </div>
+     <input type="text" id="pag-nota" placeholder="Nota opcional" class="w-full p-3 bg-gray-50 border rounded-lg text-sm outline-none">
+     <button onclick="guardarPago(this)" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-emerald-700 text-sm"><i class="fas fa-save mr-2"></i>Guardar</button>
+  </div>
+  
+  <div id="lista-pagos" class="space-y-3"></div>
+</section>
+
+<!-- SECCIÓN: Metas de Ahorro -->
+<section class="mb-24">
+  <div class="flex justify-between items-center mb-3 ml-1">
+     <h3 class="text-sm font-bold text-gray-700">Metas de Ahorro</h3>
+     <button onclick="toggleForm('form-nueva-meta')" class="text-xs bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-full hover:bg-emerald-200 transition"><i class="fas fa-plus mr-1"></i>Nueva</button>
+  </div>
+  
+  <div id="form-nueva-meta" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-emerald-200 mb-4 transition-all space-y-3">
+     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Crear Meta</h4>
+     <input type="text" id="meta-nombre" placeholder="Nombre completo" class="w-full p-3 bg-gray-50 border rounded-lg text-sm outline-none">
+     <div class="flex gap-2">
+        <div class="relative w-1/2"><span class="absolute left-3 top-3 text-gray-400 text-sm">S/</span><input type="number" id="meta-objetivo" placeholder="Objetivo" class="w-full p-3 pl-8 bg-gray-50 border rounded-lg text-sm outline-none"></div>
+        <input type="date" id="meta-fecha" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 outline-none">
+     </div>
+     <button onclick="guardarNuevaMeta(this)" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-emerald-700 text-sm"><i class="fas fa-save mr-2"></i>Crear Meta</button>
+  </div>
+
+  <div id="loading-planificacion" class="flex flex-col items-center justify-center py-6 hidden">
+    <i class="fas fa-circle-notch fa-spin text-2xl text-emerald-600 mb-2"></i>
+    <p class="text-sm text-gray-500">Sincronizando...</p>
+  </div>
+
+  <div id="lista-metas" class="space-y-4"></div>
+</section>
+
+<script>
+  // ¡REEMPLAZA AQUÍ CON TU URL FINAL!
+  const API_URL_PLANIFICACION = "https://script.google.com/macros/s/AKfycbxp4ySSgMGAM47n1Be12Hwo2hmWNWfYLQbk5ERleidhNXnpNZU2kEbq5r64W_eL6Lsd/exec";
+  
+  let p_cuentas = [];
+  let p_categorias = [];
+
+  function toggleForm(id) { document.getElementById(id).classList.toggle('hidden'); }
+
+  async function cargarPlanificacion() {
+    document.getElementById('loading-planificacion').classList.remove('hidden');
+    document.getElementById('lista-metas').innerHTML = '';
+    document.getElementById('lista-presupuestos').innerHTML = '';
+    document.getElementById('lista-pagos').innerHTML = '';
+    
+    try {
+      const res = await fetch(API_URL_PLANIFICACION, { method: 'POST', body: JSON.stringify({ action: "obtenerPlanificacion" }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }});
+      const json = await res.json();
+      if (json.estado === "exito") {
+        p_cuentas = json.listasFormulario.cuentas;
+        p_categorias = json.listasFormulario.categorias;
+        
+        // Poblamos los selectores
+        poblarSelectoresPlan();
+        
+        renderizarPresupuestos(json.presupuestos);
+        renderizarPagos(json.pagos);
+        renderizarMetas(json.metas);
+      }
+    } catch (e) { console.error(e); }
+    document.getElementById('loading-planificacion').classList.add('hidden');
+  }
+
+  // --- LÓGICA DE FORMULARIOS DESPLEGABLES ---
+  function poblarSelectoresPlan() {
+    const sOri = document.getElementById('pag-origen'); const sDes = document.getElementById('pag-destino');
+    sOri.innerHTML = '<option value="">Origen</option>'; sDes.innerHTML = '<option value="">Destino</option>';
+    p_cuentas.forEach(c => {
+      sOri.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+      sDes.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+    });
+    cambiarTipoPagoPlan(); // Configura categorías por defecto (Egreso)
+  }
+
+  function cambiarTipoPagoPlan() {
+    const tipo = document.getElementById('pag-tipo').value;
+    const sDes = document.getElementById('pag-destino');
+    const sOri = document.getElementById('pag-origen');
+    
+    if (tipo === 'Transferencia') { sDes.classList.remove('hidden'); sOri.classList.replace('w-full', 'w-1/2'); } 
+    else { sDes.classList.add('hidden'); sOri.classList.replace('w-1/2', 'w-full'); }
+
+    // Filtrar principales (pagos)
+    const sPrin = document.getElementById('pag-principal'); sPrin.innerHTML = '<option value="">Categoría</option>';
+    const catDelTipo = tipo === 'Transferencia' ? p_categorias : p_categorias.filter(c => c.clase === tipo);
+    const prinUnicas = [...new Set(catDelTipo.map(c => c.principal))];
+    prinUnicas.forEach(cat => sPrin.innerHTML += `<option value="${cat}">${cat}</option>`);
+    
+    // Filtrar principales (presupuestos - siempre egresos por lógica general)
+    const pPrin = document.getElementById('pre-principal'); pPrin.innerHTML = '<option value="">Categoría</option>';
+    const prinUnicasPre = [...new Set(p_categorias.filter(c => c.clase === 'Egreso').map(c => c.principal))];
+    prinUnicasPre.forEach(cat => pPrin.innerHTML += `<option value="${cat}">${cat}</option>`);
+  }
+
+  function filtrarSubcategoriasPlan(idPrin, idSub, tipo) {
+    const prin = document.getElementById(idPrin).value;
+    const sSub = document.getElementById(idSub);
+    sSub.innerHTML = '<option value="">Subcategoría</option>';
+    const subcats = (tipo === 'Transferencia' || idPrin === 'pre-principal') ? p_categorias.filter(c => c.principal === prin) : p_categorias.filter(c => c.clase === tipo && c.principal === prin);
+    subcats.forEach(sub => sSub.innerHTML += `<option value="${sub.sub}">${sub.sub}</option>`);
+  }
+
+  // --- EJECUTAR PAGO MEDIANTE CHECKBOX ---
+  async function marcarPagoEjecutado(checkbox, idPago) {
+    if (!checkbox.checked) return; // No permitimos deshacer por ahora
+    if (!confirm("¿Registrar este pago como EJECUTADO hoy? Se creará una transacción automáticamente.")) {
+      checkbox.checked = false;
+      return;
+    }
+    
+    // Bloquear Checkbox
+    checkbox.disabled = true;
+    const hoy = new Date();
+    const fechaStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+    
+    try {
+      const res = await fetch(API_URL_PLANIFICACION, { method: 'POST', body: JSON.stringify({ action: "ejecutarPago", datos: { id: idPago, fechaEjecucion: fechaStr } }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }});
+      const json = await res.json();
+      if(json.estado === "exito") cargarPlanificacion();
+      else { alert("Error: " + json.error); checkbox.checked = false; checkbox.disabled = false; }
+    } catch(e) { alert("Error de conexión"); checkbox.checked = false; checkbox.disabled = false; }
+  }
+
+  // --- RENDERIZADOS ---
+  function renderizarPresupuestos(presupuestos) {
+    const contenedor = document.getElementById('lista-presupuestos');
+    if(presupuestos.length === 0) { contenedor.innerHTML = '<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><p class="text-center text-gray-400 text-sm py-2">No hay presupuestos activos.</p></div>'; return; }
+    const agrupados = {};
+    presupuestos.forEach(p => { let m = p.periodo; try{ if(m.includes("GMT")||m.includes("TUE")||m.includes("SAT")){let d=new Date(m);if(!isNaN(d))m=String(d.getMonth()+1).padStart(2,'0')+"/"+d.getFullYear();} }catch(e){} if(!agrupados[m]) agrupados[m]=[]; agrupados[m].push(p); });
+    for (const periodo in agrupados) {
+      contenedor.innerHTML += `<h4 class="text-xs font-bold text-gray-500 mt-2 mb-2 uppercase tracking-wider ml-1">${periodo}</h4>`;
+      agrupados[periodo].forEach(pres => {
+        let p = pres.consumido > 100 ? 100 : pres.consumido;
+        let cBarra = pres.estado === 'Respetado' ? '#10b981' : (pres.estado === 'Excedido' ? '#ef4444' : '#f97316');
+        let cEst = pres.estado === 'Respetado' ? 'text-emerald-600 bg-emerald-100' : (pres.estado === 'Excedido' ? 'text-red-600 bg-red-100' : 'text-orange-600 bg-orange-100');
+        let tit = pres.subcategoria ? `${pres.principal} <span class="text-gray-400 text-xs font-normal">(${pres.subcategoria})</span>` : pres.principal;
+        let varTxt = pres.variacion >= 0 ? `Quedan S/ ${pres.variacion.toFixed(2)}` : `Te pasaste S/ ${Math.abs(pres.variacion).toFixed(2)}`;
+        contenedor.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition"><div class="flex justify-between items-end mb-3"><div class="flex-1 truncate pr-2"><h4 class="font-bold text-gray-800 text-sm truncate">${tit}</h4><div class="flex items-center gap-2 mt-1.5"><span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${cEst}">${pres.estado}</span><span class="text-[10px] text-gray-500 font-semibold">${varTxt}</span></div></div><div class="text-right whitespace-nowrap"><p class="text-sm font-bold text-gray-800">S/ ${pres.alcanzado.toFixed(2)} <span class="text-xs text-gray-400 font-normal">/ S/ ${pres.limite.toFixed(0)}</span></p></div></div><div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden relative"><div class="h-2 rounded-full transition-all duration-1000 ease-out" style="width: ${p}%; background-color: ${cBarra};"></div></div></div>`;
+      });
+    }
+  }
+
+  function renderizarPagos(pagos) {
+    const contenedor = document.getElementById('lista-pagos');
+    if(pagos.length === 0) { contenedor.innerHTML = '<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><p class="text-center text-gray-400 text-sm py-2">No hay pagos planificados.</p></div>'; return; }
+    pagos.forEach(p => {
+      let eBad = p.estado.includes('Ejecutado') ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase text-emerald-600 bg-emerald-100">Ejecutado</span>' : (p.estado.includes('Vencido') ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase text-red-600 bg-red-100">Vencido</span>' : '<span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase text-orange-600 bg-orange-100">Pendiente</span>');
+      let fl = p.vencimiento; try { if (fl && !fl.includes('/')) { let d=new Date(fl); if(!isNaN(d)) fl=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; } } catch(e){}
+      
+      // Checkbox Interactivo
+      let chk = `<input type="checkbox" onchange="marcarPagoEjecutado(this, '${p.id}')" class="w-5 h-5 accent-emerald-600 cursor-pointer" ${p.estado.includes('Ejecutado') ? 'checked disabled' : ''}>`;
+
+      contenedor.innerHTML += `<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition flex justify-between items-center gap-3"><div class="pt-1">${chk}</div><div class="flex-1 overflow-hidden"><p class="font-bold text-gray-800 text-sm truncate">${p.categoria} ${p.subcategoria ? `(${p.subcategoria})` : ''}</p><div class="flex items-center gap-2 mt-1">${eBad}<p class="text-[10px] text-gray-400"><i class="far fa-calendar-alt mr-1"></i>${fl}</p></div>${p.nota ? `<p class="text-[10px] text-gray-400 italic mt-1">${p.nota}</p>` : ''}</div><div class="text-right"><p class="text-sm font-bold text-gray-800">S/ ${p.monto.toFixed(2)}</p></div></div>`;
+    });
+  }
+
+  function renderizarMetas(metas) {
+    const contenedor = document.getElementById('lista-metas');
+    if(metas.length === 0) { contenedor.innerHTML = '<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><p class="text-center text-gray-400 text-sm py-2">No tienes metas de ahorro activas.</p></div>'; return; }
+    metas.forEach(meta => {
+      let fl = meta.fechaLimite; try { if (fl && !fl.includes('/')) { let d=new Date(fl); if(!isNaN(d)) fl=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; } } catch(e){}
+      let p = meta.objetivo > 0 ? (meta.actual / meta.objetivo) * 100 : 0; if (p > 100) p = 100;
+      contenedor.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition"><div class="flex justify-between items-end mb-3"><div class="flex-1 truncate pr-2"><h4 class="font-bold text-gray-800 text-sm truncate">${meta.nombre}</h4><p class="text-[10px] text-gray-400 mt-0.5"><i class="far fa-calendar-alt mr-1"></i>Límite: ${fl}</p></div><div class="text-right whitespace-nowrap"><p class="text-sm font-bold text-gray-800">S/ ${meta.actual.toFixed(2)} <span class="text-xs text-gray-400 font-normal">/ S/ ${meta.objetivo.toFixed(0)}</span></p></div></div><div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden relative"><div class="h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: ${p}%; background-color: ${meta.color};"></div></div></div>`;
+    });
+  }
+
+  // --- GUARDADOS ---
+  async function peticionPlanificacion(action, payload, boton) {
+    const htmlOrg = boton.innerHTML; boton.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>'; boton.disabled = true;
+    try {
+      const res = await fetch(API_URL_PLANIFICACION, { method: 'POST', body: JSON.stringify({ action: action, datos: payload }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }});
+      const json = await res.json();
+      if (json.estado === "exito") cargarPlanificacion(); else alert("Error: " + json.error);
+    } catch (e) { alert("Error de red."); }
+    boton.innerHTML = htmlOrg; boton.disabled = false;
+  }
+
+  function guardarNuevaMeta(btn) {
+    const n = document.getElementById('meta-nombre').value.trim(); const o = parseFloat(document.getElementById('meta-objetivo').value); const f = document.getElementById('meta-fecha').value;
+    if (!n || isNaN(o) || !f) return alert("Llena todos los campos");
+    peticionPlanificacion("guardarMeta", { nombre: n, objetivo: o, fechaLimite: f }, btn);
+    toggleForm('form-nueva-meta');
+  }
+
+  function guardarPresupuesto(btn) {
+    const p = document.getElementById('pre-periodo').value; const c = document.getElementById('pre-principal').value; const s = document.getElementById('pre-sub').value; const l = parseFloat(document.getElementById('pre-limite').value);
+    if (!p || !c || isNaN(l)) return alert("Llena mes, categoría y límite");
+    peticionPlanificacion("guardarPresupuesto", { periodo: p, categoria: c, subcategoria: s, limite: l }, btn);
+    toggleForm('form-nuevo-presupuesto');
+  }
+
+  function guardarPago(btn) {
+    const t = document.getElementById('pag-tipo').value; const o = document.getElementById('pag-origen').value; const d = document.getElementById('pag-destino').value; const c = document.getElementById('pag-principal').value; const s = document.getElementById('pag-sub').value; const m = parseFloat(document.getElementById('pag-monto').value); const n = document.getElementById('pag-nota').value; const f = document.getElementById('pag-fecha').value;
+    if (!o || !c || isNaN(m) || !f || (t==='Transferencia' && !d)) return alert("Faltan datos obligatorios");
+    peticionPlanificacion("guardarPago", { tipo: t, origen: o, destino: d, categoria: c, subcategoria: s, monto: m, nota: n, vencimiento: f }, btn);
+    toggleForm('form-nuevo-pago');
+  }
+
+  setTimeout(cargarPlanificacion, 100);
+</script>

@@ -1,0 +1,235 @@
+<!-- Carrusel de Cuentas -->
+<section class="mb-6 w-full overflow-hidden">
+  <div class="flex justify-between items-center mb-2">
+    <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wider">Tus Cuentas</h2>
+    <i class="fas fa-cog text-gray-400 cursor-pointer hover:text-emerald-600 transition text-lg" title="Configurar Cuentas" onclick="abrirModalConfig()"></i>
+  </div>
+  <div id="dashboard-cuentas" class="flex gap-4 overflow-x-auto pb-4 snap-x w-full">
+    <p class="text-sm text-gray-400 italic px-2">Cargando tus saldos...</p>
+  </div>
+</section>
+
+<!-- Sección de Gráficos (Interactivos) -->
+<section class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6 relative">
+  
+  <!-- Cabecera -->
+  <div class="flex justify-between items-center mb-4">
+    <h2 id="titulo-grafico" class="text-md font-bold text-gray-800">Estructura General</h2>
+    <button id="btn-volver" onclick="volverGraficoPrincipal()" class="hidden text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full hover:bg-gray-200 transition">
+      <i class="fas fa-arrow-left mr-1"></i> Volver
+    </button>
+  </div>
+
+  <!-- Pestañas Ingreso / Egreso -->
+  <div class="flex bg-gray-100 rounded-lg p-1 mb-4" id="tabs-graficos">
+    <button id="tab-egreso" onclick="cambiarVistaGrafico('Egreso')" class="flex-1 py-1.5 rounded-md bg-white shadow text-sm font-bold text-red-600">Egresos</button>
+    <button id="tab-ingreso" onclick="cambiarVistaGrafico('Ingreso')" class="flex-1 py-1.5 rounded-md text-sm font-bold text-gray-500 hover:text-emerald-600 transition">Ingresos</button>
+  </div>
+
+  <!-- Filtros de Tiempo -->
+  <div class="flex justify-between space-x-1 mb-4 bg-gray-50 p-1 rounded-lg border border-gray-100">
+    <button onclick="cambiarPeriodo('7D')" id="btn-7D" class="flex-1 py-1 text-xs font-semibold text-gray-500 rounded hover:bg-gray-200 transition">1 Sem</button>
+    <button onclick="cambiarPeriodo('1M')" id="btn-1M" class="flex-1 py-1 text-xs font-bold bg-white shadow text-emerald-600 rounded">1 Mes</button>
+    <button onclick="cambiarPeriodo('6M')" id="btn-6M" class="flex-1 py-1 text-xs font-semibold text-gray-500 rounded hover:bg-gray-200 transition">6 Mes</button>
+    <button onclick="cambiarPeriodo('1Y')" id="btn-1Y" class="flex-1 py-1 text-xs font-semibold text-gray-500 rounded hover:bg-gray-200 transition">1 Año</button>
+  </div>
+  
+  <p id="dashboard-total-grafico" class="text-3xl font-bold text-gray-800 mb-2">S/ 0.00</p>
+  
+  <div class="relative h-72 w-full flex justify-center mt-2 cursor-pointer">
+    <canvas id="graficoInteractivo"></canvas>
+  </div>
+</section>
+
+<script>
+  const API_URL_DASHBOARD = "https://script.google.com/macros/s/AKfycbxp4ySSgMGAM47n1Be12Hwo2hmWNWfYLQbk5ERleidhNXnpNZU2kEbq5r64W_eL6Lsd/exec";
+  
+  let miGrafico = null;
+  let datosMaestrosGrafico = []; 
+  
+  // Estado de Navegación del Gráfico
+  let vistaActual = 'Egreso'; 
+  let periodoActual = '1M';
+  let nivelActual = 'Principal'; 
+  let catPrincipalSeleccionada = '';
+
+  // --- FUNCIÓN MATEMÁTICA DE CONTRASTE ---
+  // Calcula la luminancia YIQ para decidir si la letra debe ser blanca o gris oscuro
+  function obtenerColorTexto(hexColor) {
+    if (!hexColor) return '#ffffff'; // Blanco por defecto
+    let color = hexColor.replace('#', '');
+    if (color.length === 3) color = color.split('').map(c => c + c).join(''); // Convertir #RGB a #RRGGBB
+    
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+    
+    // Fórmula YIQ
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    
+    // Si yiq >= 128 el color es claro (retorna texto oscuro). Si no, retorna texto blanco.
+    return (yiq >= 128) ? '#1f2937' : '#ffffff'; 
+  }
+
+  async function cargarDatosDashboard() {
+    try {
+      const peticion = { action: "obtenerDatosDashboard" };
+      const respuesta = await fetch(API_URL_DASHBOARD, {
+        method: 'POST', body: JSON.stringify(peticion),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const json = await respuesta.json();
+      if(json.estado === "exito") {
+        renderizarCuentas(json.cuentas);
+        datosMaestrosGrafico = json.datosGraficos; 
+        dibujarGraficoActual();
+      }
+    } catch(error) { console.error(error); }
+  }
+
+  function renderizarCuentas(cuentas) {
+    const contenedor = document.getElementById('dashboard-cuentas');
+    contenedor.innerHTML = '';
+    cuentas.forEach(cuenta => {
+      // 1. Tomamos el color de la base de datos. Si no hay, usamos gris.
+      const colorBg = cuenta.color || '#374151';
+      
+      // 2. Calculamos si la letra debe ser oscura o clara
+      const colorTexto = obtenerColorTexto(colorBg);
+      
+      // 3. El saldo siempre en rojo si es negativo. Si es positivo, usa el color de texto contrastante.
+      const colorSaldo = cuenta.saldoActual < 0 ? '#ef4444' : colorTexto;
+      
+      contenedor.innerHTML += `
+        <div class="min-w-[140px] max-w-[160px] rounded-xl p-4 snap-start shrink-0 shadow-md cursor-pointer transition transform hover:scale-105" 
+             style="background-color: ${colorBg}; color: ${colorTexto};">
+          <p class="text-xs opacity-90 truncate">${cuenta.nombre}</p>
+          <p class="text-lg font-bold truncate" style="color: ${colorSaldo};">S/ ${parseFloat(cuenta.saldoActual).toFixed(2)}</p>
+        </div>
+      `;
+    });
+  }
+
+  // --- CONTROLADORES DE BOTONES ---
+  
+  function cambiarVistaGrafico(tipo) {
+    vistaActual = tipo;
+    nivelActual = 'Principal'; 
+    
+    document.getElementById('tab-egreso').className = tipo === 'Egreso' 
+      ? "flex-1 py-1.5 rounded-md bg-white shadow text-sm font-bold text-red-600" 
+      : "flex-1 py-1.5 rounded-md text-sm font-bold text-gray-500 hover:text-red-600 transition";
+      
+    document.getElementById('tab-ingreso').className = tipo === 'Ingreso' 
+      ? "flex-1 py-1.5 rounded-md bg-white shadow text-sm font-bold text-emerald-600" 
+      : "flex-1 py-1.5 rounded-md text-sm font-bold text-gray-500 hover:text-emerald-600 transition";
+      
+    dibujarGraficoActual();
+  }
+
+  function cambiarPeriodo(periodo) {
+    periodoActual = periodo;
+    
+    ['7D', '1M', '6M', '1Y'].forEach(p => {
+      document.getElementById('btn-' + p).className = p === periodo
+        ? "flex-1 py-1 text-xs font-bold bg-white shadow text-emerald-600 rounded"
+        : "flex-1 py-1 text-xs font-semibold text-gray-500 rounded hover:bg-gray-200 transition";
+    });
+    
+    dibujarGraficoActual(); 
+  }
+
+  function volverGraficoPrincipal() {
+    nivelActual = 'Principal';
+    catPrincipalSeleccionada = '';
+    dibujarGraficoActual();
+  }
+
+  // --- LÓGICA DE DIBUJO ---
+
+  function dibujarGraficoActual() {
+    if (nivelActual === 'Principal') dibujarNivelPrincipal();
+    else dibujarNivelSubcategoria();
+  }
+
+  function dibujarNivelPrincipal() {
+    document.getElementById('btn-volver').classList.add('hidden');
+    document.getElementById('tabs-graficos').classList.remove('hidden');
+    document.getElementById('titulo-grafico').innerText = vistaActual === 'Egreso' ? 'Egresos Generales' : 'Ingresos Generales';
+
+    const agrupado = {};
+    datosMaestrosGrafico.filter(d => d.clase === vistaActual).forEach(item => {
+      const valor = item.totales[periodoActual];
+      if (valor > 0) { 
+        if(agrupado[item.principal]) agrupado[item.principal].total += valor;
+        else agrupado[item.principal] = { total: valor, color: item.color };
+      }
+    });
+    procesarYRenderizar(agrupado, true);
+  }
+
+  function dibujarNivelSubcategoria() {
+    document.getElementById('btn-volver').classList.remove('hidden');
+    document.getElementById('tabs-graficos').classList.add('hidden');
+    document.getElementById('titulo-grafico').innerText = catPrincipalSeleccionada;
+
+    const agrupado = {};
+    datosMaestrosGrafico.filter(d => d.clase === vistaActual && d.principal === catPrincipalSeleccionada).forEach(item => {
+      const valor = item.totales[periodoActual];
+      if (valor > 0) {
+        agrupado[item.subcategoria] = { total: valor, color: item.color };
+      }
+    });
+    procesarYRenderizar(agrupado, false);
+  }
+
+  function procesarYRenderizar(agrupado, esNivelPrincipal) {
+    const labels = Object.keys(agrupado);
+    const data = labels.map(l => agrupado[l].total);
+    const bgColors = labels.map(l => agrupado[l].color);
+    const sumaTotal = data.reduce((a, b) => a + b, 0);
+
+    document.getElementById('dashboard-total-grafico').innerText = 'S/ ' + sumaTotal.toFixed(2);
+
+    const ctx = document.getElementById('graficoInteractivo');
+    if (miGrafico) miGrafico.destroy();
+
+    if (data.length === 0) {
+      miGrafico = new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: ['Sin movimientos'], datasets: [{ data: [1], backgroundColor: ['#f3f4f6'], borderWidth: 0 }] },
+        options: { maintainAspectRatio: false, plugins: { tooltip: {enabled: false}, legend: {display: false} } }
+      });
+      return;
+    }
+
+    miGrafico = new Chart(ctx.getContext('2d'), {
+      type: 'doughnut',
+      data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColors, borderWidth: 0, hoverOffset: 4 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: { 
+          legend: { display: true, position: 'bottom', labels: { usePointStyle: true, padding: 15 } },
+          // También aplicamos el contraste inteligente a los Tooltips flotantes del gráfico
+          tooltip: {
+            callbacks: {
+              labelTextColor: function(context) {
+                return obtenerColorTexto(context.dataset.backgroundColor[context.dataIndex]);
+              }
+            }
+          }
+        },
+        onClick: (event, elements, chart) => {
+          if (esNivelPrincipal && elements[0]) {
+            const indexClickeado = elements[0].index;
+            catPrincipalSeleccionada = chart.data.labels[indexClickeado];
+            nivelActual = 'Subcategoria';
+            dibujarGraficoActual();
+          }
+        }
+      }
+    });
+  }
+
+  setTimeout(cargarDatosDashboard, 100);
+</script>

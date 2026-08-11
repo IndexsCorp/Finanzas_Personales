@@ -1,0 +1,342 @@
+<div id="modal-registro" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex flex-col justify-end transition-opacity">
+  <div class="bg-white rounded-t-3xl w-full max-w-md mx-auto p-5 shadow-2xl h-[90vh] flex flex-col relative">
+    
+    <!-- Notificación Toast Elegante -->
+    <div id="toast-notificacion" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 translate-y-[-150%] opacity-0 z-[60] flex items-center gap-2">
+      <i class="fas fa-check-circle"></i> 
+      <span id="toast-msg" class="font-bold">Guardado correctamente</span>
+    </div>
+    
+    <!-- Spinner de carga -->
+    <div id="cargando-overlay" class="absolute inset-0 bg-white bg-opacity-90 z-10 flex flex-col items-center justify-center rounded-t-3xl hidden">
+      <i class="fas fa-circle-notch fa-spin text-4xl text-emerald-600 mb-2"></i>
+      <p class="text-gray-500 font-semibold" id="texto-carga">Cargando datos...</p>
+    </div>
+
+    <!-- Cabecera -->
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold text-gray-800">Nuevo Registro</h2>
+      <button onclick="cerrarModal()" class="text-gray-500 hover:text-red-500 text-2xl p-2"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Pestañas de Tipo -->
+    <div class="flex bg-gray-200 rounded-lg p-1 mb-4">
+      <button id="btn-egreso" onclick="cambiarTipo('Egreso')" class="flex-1 py-2 rounded-md bg-white shadow text-sm font-semibold text-red-600">Egreso</button>
+      <button id="btn-ingreso" onclick="cambiarTipo('Ingreso')" class="flex-1 py-2 rounded-md text-sm font-semibold text-gray-500">Ingreso</button>
+      <button id="btn-transferencia" onclick="cambiarTipo('Transferencia')" class="flex-1 py-2 rounded-md text-sm font-semibold text-gray-500">Transferencia</button>
+    </div>
+
+    <!-- Display Calculadora -->
+    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4 text-right shadow-inner">
+      <div id="display-calculo" class="text-sm text-gray-400 h-5 mb-1 tracking-widest"></div>
+      <div id="display-monto" class="text-4xl font-bold text-gray-800 truncate">0</div>
+    </div>
+
+    <!-- Formulario Dinámico -->
+    <div class="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
+      <div class="flex flex-col">
+        <label class="text-xs text-gray-500 font-semibold mb-1">Fecha</label>
+        <input type="date" id="input-fecha" class="w-full p-3 border rounded-lg bg-gray-50 outline-none">
+      </div>
+      
+      <!-- ORIGEN (Doble Desplegable) -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col">
+          <label class="text-xs text-gray-500 font-semibold mb-1" id="label-tipo-origen">Tipo (Salida)</label>
+          <select id="select-tipo-origen" onchange="filtrarCuentas('select-tipo-origen', 'select-origen')" class="w-full p-3 border rounded-lg bg-gray-50 outline-none"></select>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-gray-500 font-semibold mb-1" id="label-origen">Cuenta</label>
+          <select id="select-origen" class="w-full p-3 border rounded-lg bg-gray-50 outline-none"></select>
+        </div>
+      </div>
+
+      <!-- DESTINO (Doble Desplegable - Oculto por defecto) -->
+      <div id="bloque-destino" class="hidden grid-cols-2 gap-3 mt-3">
+        <div class="flex flex-col">
+          <label class="text-xs text-gray-500 font-semibold mb-1">Tipo Destino</label>
+          <select id="select-tipo-destino" onchange="filtrarCuentas('select-tipo-destino', 'select-destino')" class="w-full p-3 border rounded-lg bg-gray-50 outline-none"></select>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-gray-500 font-semibold mb-1">Cuenta Destino</label>
+          <select id="select-destino" class="w-full p-3 border rounded-lg bg-gray-50 outline-none"></select>
+        </div>
+      </div>
+
+      <hr class="my-2 border-gray-100">
+
+      <!-- CATEGORÍAS (AHORA SIEMPRE VISIBLE) -->
+      <div id="bloque-categorias" class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col">
+          <label class="text-xs text-gray-500 font-semibold mb-1">Categoría</label>
+          <select id="select-principal" onchange="filtrarSubcategorias()" class="w-full p-3 border rounded-lg bg-gray-50 outline-none"></select>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-xs text-gray-500 font-semibold mb-1">Subcategoría</label>
+          <select id="select-sub" class="w-full p-3 border rounded-lg bg-gray-50 outline-none"></select>
+        </div>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-xs text-gray-500 font-semibold mb-1">Nota (Opcional)</label>
+        <input type="text" id="input-nota" placeholder="Ej. Almuerzo de trabajo" class="w-full p-3 border rounded-lg bg-gray-50 outline-none">
+      </div>
+    </div>
+
+    <!-- Teclado Numérico -->
+    <div class="grid grid-cols-4 gap-2 mt-auto">
+      <button onclick="inputCalc('7')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">7</button>
+      <button onclick="inputCalc('8')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">8</button>
+      <button onclick="inputCalc('9')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">9</button>
+      <button onclick="inputCalc('/')" class="bg-gray-200 text-blue-600 p-3 rounded-lg font-bold text-xl active:bg-gray-300">÷</button>
+      <button onclick="inputCalc('4')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">4</button>
+      <button onclick="inputCalc('5')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">5</button>
+      <button onclick="inputCalc('6')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">6</button>
+      <button onclick="inputCalc('*')" class="bg-gray-200 text-blue-600 p-3 rounded-lg font-bold text-xl active:bg-gray-300">×</button>
+      <button onclick="inputCalc('1')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">1</button>
+      <button onclick="inputCalc('2')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">2</button>
+      <button onclick="inputCalc('3')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">3</button>
+      <button onclick="inputCalc('-')" class="bg-gray-200 text-blue-600 p-3 rounded-lg font-bold text-xl active:bg-gray-300">-</button>
+      <button onclick="limpiarCalc()" class="bg-red-100 text-red-600 p-3 rounded-lg font-bold text-xl active:bg-red-200">C</button>
+      <button onclick="inputCalc('0')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">0</button>
+      <button onclick="inputCalc('.')" class="bg-gray-100 p-3 rounded-lg font-bold text-xl active:bg-gray-300">.</button>
+      <button onclick="inputCalc('+')" class="bg-gray-200 text-blue-600 p-3 rounded-lg font-bold text-xl active:bg-gray-300">+</button>
+      <button onclick="calcularResultado()" class="bg-gray-800 text-white col-span-2 p-3 rounded-lg font-bold text-xl active:bg-gray-900">=</button>
+      <button onclick="enviarDatosAGoogle()" class="bg-blue-600 text-white col-span-2 p-3 rounded-lg font-bold text-xl active:bg-blue-700 shadow-md">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbxp4ySSgMGAM47n1Be12Hwo2hmWNWfYLQbk5ERleidhNXnpNZU2kEbq5r64W_eL6Lsd/exec";
+  
+  let expresionActual = "0";
+  let tipoOperacion = "Egreso";
+  let listaCuentas = [];
+  let listaCategorias = [];
+  let datosCargados = false;
+
+  async function obtenerDatosDeBase() {
+    if(datosCargados) return;
+    
+    mostrarCarga("Conectando...");
+    try {
+      const peticion = { action: "obtenerDatosIniciales" };
+      const respuesta = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(peticion),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      
+      const json = await respuesta.json();
+      
+      if(json.estado === "exito") {
+        listaCuentas = json.cuentas;
+        listaCategorias = json.categorias;
+        
+        poblarTiposCuentas();
+        filtrarCategoriasPrincipales();
+        datosCargados = true;
+      }
+    } catch(error) {
+      console.error(error);
+      alert("Error de conexión");
+    }
+    ocultarCarga();
+  }
+
+  function poblarTiposCuentas() {
+    const tiposUnicos = [...new Set(listaCuentas.map(c => c.tipo))];
+    const sTipoOrigen = document.getElementById('select-tipo-origen');
+    const sTipoDestino = document.getElementById('select-tipo-destino');
+    
+    sTipoOrigen.innerHTML = '';
+    sTipoDestino.innerHTML = '';
+    
+    tiposUnicos.forEach(tipo => {
+      sTipoOrigen.innerHTML += `<option value="${tipo}">${tipo}</option>`;
+      sTipoDestino.innerHTML += `<option value="${tipo}">${tipo}</option>`;
+    });
+    
+    filtrarCuentas('select-tipo-origen', 'select-origen');
+    filtrarCuentas('select-tipo-destino', 'select-destino');
+  }
+
+  function filtrarCuentas(idSelectTipo, idSelectCuenta) {
+    const tipoSeleccionado = document.getElementById(idSelectTipo).value;
+    const sCuenta = document.getElementById(idSelectCuenta);
+    sCuenta.innerHTML = '';
+    
+    const cuentasFiltradas = listaCuentas.filter(c => c.tipo === tipoSeleccionado);
+    
+    cuentasFiltradas.forEach(cta => {
+      sCuenta.innerHTML += `<option value="${cta.nombre}">${cta.nombre}</option>`;
+    });
+  }
+
+  // MODIFICADO: Permite categorías en transferencias
+  function filtrarCategoriasPrincipales() {
+    const sPrincipal = document.getElementById('select-principal');
+    sPrincipal.innerHTML = '';
+    
+    // Si es transferencia muestra TODO, de lo contrario filtra por Egreso o Ingreso
+    const categoriasDelTipo = tipoOperacion === 'Transferencia' 
+                              ? listaCategorias 
+                              : listaCategorias.filter(c => c.clase === tipoOperacion);
+                              
+    const principalesUnicas = [...new Set(categoriasDelTipo.map(c => c.principal))];
+    
+    if (principalesUnicas.length === 0) {
+      sPrincipal.innerHTML = `<option value="">Sin datos</option>`;
+    } else {
+      principalesUnicas.forEach(cat => {
+        sPrincipal.innerHTML += `<option value="${cat}">${cat}</option>`;
+      });
+    }
+    filtrarSubcategorias();
+  }
+
+  // MODIFICADO: Permite subcategorías en transferencias
+  function filtrarSubcategorias() {
+    const sPrincipal = document.getElementById('select-principal').value;
+    const sSub = document.getElementById('select-sub');
+    sSub.innerHTML = '';
+    
+    const subcategorias = tipoOperacion === 'Transferencia'
+                          ? listaCategorias.filter(c => c.principal === sPrincipal)
+                          : listaCategorias.filter(c => c.clase === tipoOperacion && c.principal === sPrincipal);
+    
+    subcategorias.forEach(sub => {
+      sSub.innerHTML += `<option value="${sub.sub}">${sub.sub}</option>`;
+    });
+  }
+
+  function mostrarToast(mensaje) {
+    const toast = document.getElementById('toast-notificacion');
+    document.getElementById('toast-msg').innerText = mensaje;
+    toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+    
+    setTimeout(() => {
+      toast.classList.add('translate-y-[-150%]', 'opacity-0');
+    }, 2500);
+  }
+
+  async function enviarDatosAGoogle() {
+    calcularResultado();
+    const montoFinal = parseFloat(expresionActual);
+    
+    if(isNaN(montoFinal) || montoFinal <= 0) {
+      alert("Ingresa un monto válido.");
+      return;
+    }
+
+    const datosFormulario = {
+      fecha: document.getElementById('input-fecha').value,
+      tipoOperacion: tipoOperacion,
+      cuentaOrigen: document.getElementById('select-origen').value,
+      cuentaDestino: tipoOperacion === 'Transferencia' ? document.getElementById('select-destino').value : "",
+      categoria: document.getElementById('select-principal').value, // MODIFICADO: Ahora captura siempre la categoría
+      subcategoria: document.getElementById('select-sub').value,    // MODIFICADO: Ahora captura siempre la subcategoría
+      monto: montoFinal,
+      nota: document.getElementById('input-nota').value
+    };
+
+    mostrarCarga("Guardando...");
+    try {
+      const peticion = { action: "guardarTransaccion", datos: datosFormulario };
+      const respuesta = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(peticion),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const json = await respuesta.json();
+      
+      if(json.estado === "exito") {
+        mostrarToast("¡Transacción guardada!");
+        limpiarCalc();
+        document.getElementById('input-nota').value = "";
+      } else {
+        alert("Error: " + json.error);
+      }
+    } catch(error) {
+      console.error(error);
+      alert("Fallo de conexión al guardar.");
+    }
+    ocultarCarga();
+  }
+
+  function mostrarCarga(texto) {
+    document.getElementById('texto-carga').innerText = texto;
+    document.getElementById('cargando-overlay').classList.remove('hidden');
+  }
+  
+  function ocultarCarga() {
+    document.getElementById('cargando-overlay').classList.add('hidden');
+  }
+  
+  function abrirModal() {
+    document.getElementById('modal-registro').classList.remove('hidden');
+    const hoy = new Date();
+    document.getElementById('input-fecha').value = new Date(hoy.getTime() - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    obtenerDatosDeBase();
+  }
+  
+  function cerrarModal() {
+    document.getElementById('modal-registro').classList.add('hidden');
+    limpiarCalc();
+    document.getElementById('input-nota').value = "";
+  }
+  
+  function cambiarTipo(tipo) {
+    tipoOperacion = tipo;
+    const btnStyles = "flex-1 py-2 rounded-md text-sm font-semibold ";
+    document.getElementById('btn-egreso').className = btnStyles + "text-gray-500 bg-transparent";
+    document.getElementById('btn-ingreso').className = btnStyles + "text-gray-500 bg-transparent";
+    document.getElementById('btn-transferencia').className = btnStyles + "text-gray-500 bg-transparent";
+    
+    // El bloque de categorías YA NO SE OCULTA en transferencias
+    if (tipo === 'Egreso') {
+      document.getElementById('btn-egreso').className = btnStyles + "bg-white shadow text-red-600";
+      document.getElementById('bloque-destino').classList.add('hidden');
+      document.getElementById('bloque-destino').classList.remove('grid');
+      document.getElementById('label-tipo-origen').innerText = "Tipo (Salida)";
+    } else if (tipo === 'Ingreso') {
+      document.getElementById('btn-ingreso').className = btnStyles + "bg-white shadow text-green-600";
+      document.getElementById('bloque-destino').classList.add('hidden');
+      document.getElementById('bloque-destino').classList.remove('grid');
+      document.getElementById('label-tipo-origen').innerText = "Tipo (Entrada)";
+    } else {
+      document.getElementById('btn-transferencia').className = btnStyles + "bg-white shadow text-blue-600";
+      document.getElementById('bloque-destino').classList.remove('hidden');
+      document.getElementById('bloque-destino').classList.add('grid');
+      document.getElementById('label-tipo-origen').innerText = "Tipo Origen";
+    }
+    
+    if(datosCargados) filtrarCategoriasPrincipales(); // Se actualiza siempre, sin importar el tipo
+  }
+
+  function inputCalc(caracter) {
+    if (expresionActual === "0" && !['.','+','-','*','/'].includes(caracter)) expresionActual = caracter;
+    else expresionActual += caracter;
+    document.getElementById('display-monto').innerText = expresionActual;
+  }
+  
+  function limpiarCalc() {
+    expresionActual = "0";
+    document.getElementById('display-calculo').innerText = "";
+    document.getElementById('display-monto').innerText = "0";
+  }
+  
+  function calcularResultado() {
+    try {
+      document.getElementById('display-calculo').innerText = expresionActual + " =";
+      let resultado = eval(expresionActual);
+      if (!Number.isInteger(resultado)) resultado = parseFloat(resultado).toFixed(2);
+      expresionActual = resultado.toString();
+      document.getElementById('display-monto').innerText = expresionActual;
+    } catch(e) {
+      expresionActual = "Error";
+      document.getElementById('display-monto').innerText = expresionActual;
+      setTimeout(limpiarCalc, 1000);
+    }
+  }
+</script>

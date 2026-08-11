@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>App Finanzas</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased h-screen flex flex-col relative overflow-hidden pb-16">
+
+  <!-- TOP BAR -->
+  <header class="bg-emerald-600 text-white px-5 py-4 flex justify-between items-center shadow-md z-10">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-bars text-xl"></i>
+      <h1 id="header-title" class="text-xl font-bold">Inicio</h1>
+    </div>
+    <i class="fas fa-bell text-xl"></i>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL (Vacíos, se llenarán con fetch) -->
+  <main class="flex-1 overflow-y-auto w-full relative">
+    <div id="vista-dashboard" class="vista-app absolute w-full h-full p-4 transition-opacity duration-300 hidden opacity-0"></div>
+    <div id="vista-registros" class="vista-app absolute w-full h-full p-4 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="vista-planificacion" class="vista-app absolute w-full h-full p-4 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="vista-compras" class="vista-app absolute w-full h-full p-4 hidden opacity-0 transition-opacity duration-300"></div>
+  </main>
+
+  <!-- MODALES INYECTADOS -->
+  <div id="modal-container"></div>
+  <div id="modal-configuracion-container"></div> <!-- NUEVO: Contenedor para la configuración -->
+
+  <!-- BOTÓN FLOTANTE (FAB) -->
+  <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
+    <button onclick="abrirModalRegistro()" class="bg-blue-600 text-white rounded-full w-14 h-14 shadow-lg hover:bg-blue-700 flex items-center justify-center text-2xl transition transform hover:scale-105">
+      <i class="fas fa-plus"></i>
+    </button>
+  </div>
+
+  <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+  <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-between px-6 pb-2 pt-3 z-20 text-xs text-gray-400 select-none">
+    <div id="nav-dashboard" onclick="cambiarVista('dashboard', 'Inicio')" class="nav-btn flex flex-col items-center text-emerald-600 cursor-pointer">
+      <i class="fas fa-home text-xl mb-1"></i><span>Inicio</span>
+    </div>
+    <div id="nav-registros" onclick="cambiarVista('registros', 'Historial')" class="nav-btn flex flex-col items-center hover:text-emerald-600 pr-8 cursor-pointer">
+      <i class="fas fa-list text-xl mb-1"></i><span>Registros</span>
+    </div>
+    <!-- Espacio central -->
+    <div id="nav-planificacion" onclick="cambiarVista('planificacion', 'Planificación')" class="nav-btn flex flex-col items-center hover:text-emerald-600 pl-8 cursor-pointer">
+      <i class="fas fa-chart-pie text-xl mb-1"></i><span>Plan</span>
+    </div>
+    <div id="nav-compras" onclick="cambiarVista('compras', 'Compras')" class="nav-btn flex flex-col items-center hover:text-emerald-600 cursor-pointer">
+      <i class="fas fa-shopping-cart text-xl mb-1"></i><span>Compras</span>
+    </div>
+  </nav>
+
+  <!-- LÓGICA JAVASCRIPT GLOBAL -->
+  <script>
+    // 1. Cargador de Vistas (Fetch)
+    async function cargarVistas() {
+      // Lista de archivos a cargar
+      const archivos = [
+        { nombre: 'View_Dashboard.html', idContenedor: 'vista-dashboard' },
+        { nombre: 'View_Registros.html', idContenedor: 'vista-registros' },
+        { nombre: 'View_Planificacion.html', idContenedor: 'vista-planificacion' },
+        { nombre: 'View_Compras.html', idContenedor: 'vista-compras' },
+        { nombre: 'Component_Modal.html', idContenedor: 'modal-container' },
+        { nombre: 'Component_Configuracion.html', idContenedor: 'modal-configuracion-container' } // NUEVO ARCHIVO
+      ];
+
+      for (const archivo of archivos) {
+        try {
+          const respuesta = await fetch(archivo.nombre);
+          if (respuesta.ok) {
+            const html = await respuesta.text();
+            document.getElementById(archivo.idContenedor).innerHTML = html;
+            
+            // Si el html traía scripts, hay que re-evaluarlos para que funcionen
+            ejecutarScriptsDeVista(document.getElementById(archivo.idContenedor));
+          } else {
+            console.error(`Error HTTP: ${respuesta.status} al cargar ${archivo.nombre}`);
+          }
+        } catch (error) {
+          console.error(`Error de red al cargar ${archivo.nombre}`, error);
+        }
+      }
+      
+      // Una vez cargado todo, mostramos el Dashboard por defecto
+      cambiarVista('dashboard', 'Inicio');
+    }
+
+    // Función auxiliar para que los <script> de las otras vistas funcionen al inyectarse
+    function ejecutarScriptsDeVista(contenedor) {
+      const scripts = contenedor.querySelectorAll('script');
+      scripts.forEach(scriptViejo => {
+        const scriptNuevo = document.createElement('script');
+        if (scriptViejo.src) scriptNuevo.src = scriptViejo.src;
+        scriptNuevo.innerHTML = scriptViejo.innerHTML;
+        document.body.appendChild(scriptNuevo);
+      });
+    }
+
+    // 2. Lógica de Navegación (SPA)
+    function cambiarVista(vistaId, titulo) {
+      document.querySelectorAll('.vista-app').forEach(el => {
+        el.classList.add('hidden', 'opacity-0');
+        el.classList.remove('opacity-100');
+      });
+
+      document.querySelectorAll('.nav-btn').forEach(el => {
+        el.classList.remove('text-emerald-600');
+        el.classList.add('text-gray-400');
+      });
+
+      const vistaActiva = document.getElementById('vista-' + vistaId);
+      vistaActiva.classList.remove('hidden');
+      setTimeout(() => vistaActiva.classList.remove('opacity-0'), 50);
+      
+      document.getElementById('nav-' + vistaId).classList.add('text-emerald-600');
+      document.getElementById('nav-' + vistaId).classList.remove('text-gray-400');
+      document.getElementById('header-title').innerText = titulo;
+    }
+
+    // 3. Funciones del Modal
+    function abrirModalRegistro() {
+      if(typeof abrirModal === "function") {
+        abrirModal(); 
+      } else {
+        alert("El modal aún no se ha cargado.");
+      }
+    }
+
+    // NUEVO: Función para abrir el panel de configuración
+    function abrirModalConfig() {
+      if(typeof abrirConfiguracion === "function") {
+        abrirConfiguracion(); 
+      } else {
+        alert("El panel de configuración aún no se ha cargado.");
+      }
+    }
+
+    // INICIAR LA APP AL CARGAR LA PÁGINA
+    document.addEventListener('DOMContentLoaded', cargarVistas);
+  </script>
+</body>
+</html>
