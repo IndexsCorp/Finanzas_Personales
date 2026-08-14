@@ -1,27 +1,209 @@
-<h2 class="text-lg font-bold text-gray-800 mb-3">Lista de Compras</h2>
-<p class="text-xs text-gray-500 mb-4">Selecciona los productos que ya metiste al carrito.</p>
+<!-- Cabecera de la Vista -->
+<section class="mb-4">
+  <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+    <div>
+      <h2 class="text-gray-800 font-bold text-lg">Lista de Compras</h2>
+      <p class="text-xs text-gray-400">Selecciona los productos y finaliza</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="toggleFormCompra()" class="text-xs bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-full hover:bg-emerald-200 transition">
+        <i class="fas fa-plus mr-1"></i>Nuevo
+      </button>
+      <div class="bg-gray-100 text-gray-600 p-2 rounded-lg cursor-pointer hover:bg-gray-200 transition" onclick="cargarCompras()">
+        <i class="fas fa-sync-alt"></i>
+      </div>
+    </div>
+  </div>
+</section>
 
-<div class="space-y-3 mb-20">
+<!-- Formulario Nueva Compra -->
+<section id="form-nueva-compra" class="hidden bg-white p-4 rounded-2xl shadow-sm border border-emerald-200 mb-6 transition-all space-y-3">
+  <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Añadir al carrito</h4>
   
-  <!-- Checkbox 1 -->
-  <label class="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm cursor-pointer border border-transparent hover:border-gray-200 transition">
-    <input type="checkbox" class="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500">
-    <span class="flex-1 font-medium text-gray-700">Leche, Arroz, Huevos</span>
-    <span class="text-sm text-gray-500 font-bold">S/ 45.50</span>
-  </label>
-
-  <!-- Checkbox 2 -->
-  <label class="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm cursor-pointer border border-transparent hover:border-gray-200 transition">
-    <input type="checkbox" class="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500">
-    <span class="flex-1 font-medium text-gray-700">Mouse inalámbrico</span>
-    <span class="text-sm text-gray-500 font-bold">S/ 25.00</span>
-  </label>
-
-</div>
-
-<!-- Botón de Ejecución (Solo visible en esta pestaña) -->
-<div class="absolute bottom-6 left-4 right-4">
-  <button class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-emerald-700 transition active:scale-95">
-    Finalizar Compra
+  <input type="text" id="comp-productos" placeholder="Productos (Ej. Leche, Arroz, Huevos)" class="w-full p-3 bg-gray-50 border rounded-lg text-sm font-bold outline-none focus:border-emerald-500">
+  
+  <select id="comp-tipo" onchange="cambiarTipoCompra()" class="w-full p-3 bg-gray-50 border rounded-lg text-sm outline-none">
+    <option value="Egreso" selected>Egreso</option>
+    <option value="Ingreso">Ingreso</option>
+    <option value="Transferencia">Transferencia</option>
+  </select>
+  
+  <div class="flex gap-2">
+    <select id="comp-origen" class="w-full p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Cuenta Origen</option></select>
+    <select id="comp-destino" class="hidden w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Cuenta Destino</option></select>
+  </div>
+  
+  <div class="flex gap-2">
+    <select id="comp-principal" onchange="filtrarSubcategoriasCompra()" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Categoría</option></select>
+    <select id="comp-sub" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm outline-none"><option value="">Subcategoría</option></select>
+  </div>
+  
+  <div class="flex gap-2">
+    <div class="relative w-1/2">
+      <span class="absolute left-3 top-3 text-gray-400 text-sm">S/</span>
+      <input type="number" id="comp-monto" placeholder="Monto" class="w-full p-3 pl-8 bg-gray-50 border rounded-lg text-sm outline-none">
+    </div>
+    <input type="date" id="comp-fecha" class="w-1/2 p-3 bg-gray-50 border rounded-lg text-sm text-gray-500 outline-none">
+  </div>
+  <input type="text" id="comp-nota" placeholder="Nota opcional" class="w-full p-3 bg-gray-50 border rounded-lg text-sm outline-none">
+  
+  <button onclick="guardarCompra(this)" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-emerald-700 text-sm">
+    <i class="fas fa-cart-plus mr-2"></i>Añadir a la lista
   </button>
-</div>
+</section>
+
+<!-- Lista Interactiva de Compras -->
+<section class="mb-20">
+  <div id="loading-compras" class="flex flex-col items-center justify-center py-6 hidden">
+    <i class="fas fa-circle-notch fa-spin text-2xl text-emerald-600 mb-2"></i>
+    <p class="text-sm text-gray-500">Cargando carrito...</p>
+  </div>
+
+  <div id="lista-compras" class="space-y-3">
+    <!-- Se inyectan las compras aquí -->
+  </div>
+  
+  <!-- Botón Finalizar -->
+  <div id="btn-finalizar-container" class="mt-6 hidden">
+    <button onclick="ejecutarComprasSeleccionadas(this)" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 transition transform hover:-translate-y-1">
+      <i class="fas fa-check-circle mr-2"></i>Finalizar Compra
+    </button>
+  </div>
+</section>
+
+<script>
+  // ¡REEMPLAZA AQUÍ CON TU URL FINAL!
+  const API_URL_COMPRAS = "https://script.google.com/macros/s/AKfycbxJv2P7Ot0lusRL9OMVh4YY5Ok9dC04k1nl6Gln5LLOJHPOuSDT1EyFlSKqewd6AHog/exec";
+  
+  let c_cuentas = [];
+  let c_categorias = [];
+
+  function toggleFormCompra() { document.getElementById('form-nueva-compra').classList.toggle('hidden'); }
+
+  async function cargarCompras() {
+    document.getElementById('loading-compras').classList.remove('hidden');
+    document.getElementById('lista-compras').innerHTML = '';
+    document.getElementById('btn-finalizar-container').classList.add('hidden');
+    
+    try {
+      const res = await fetch(API_URL_COMPRAS, { method: 'POST', body: JSON.stringify({ action: "obtenerCompras" }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }});
+      const json = await res.json();
+      if (json.estado === "exito") {
+        c_cuentas = json.listasFormulario.cuentas;
+        c_categorias = json.listasFormulario.categorias;
+        poblarSelectoresCompra();
+        renderizarCompras(json.compras);
+      }
+    } catch (e) { console.error(e); }
+    document.getElementById('loading-compras').classList.add('hidden');
+  }
+
+  // --- LÓGICA DE FORMULARIO ---
+  function poblarSelectoresCompra() {
+    const sOri = document.getElementById('comp-origen'); const sDes = document.getElementById('comp-destino');
+    sOri.innerHTML = '<option value="">Cuenta Origen</option>'; sDes.innerHTML = '<option value="">Cuenta Destino</option>';
+    c_cuentas.forEach(c => { sOri.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`; sDes.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`; });
+    cambiarTipoCompra();
+  }
+
+  function cambiarTipoCompra() {
+    const tipo = document.getElementById('comp-tipo').value;
+    const sDes = document.getElementById('comp-destino');
+    const sOri = document.getElementById('comp-origen');
+    if (tipo === 'Transferencia') { sDes.classList.remove('hidden'); sOri.classList.replace('w-full', 'w-1/2'); } else { sDes.classList.add('hidden'); sOri.classList.replace('w-1/2', 'w-full'); }
+
+    const sPrin = document.getElementById('comp-principal'); sPrin.innerHTML = '<option value="">Categoría</option>';
+    const catFiltro = tipo === 'Transferencia' ? c_categorias : c_categorias.filter(c => c.clase === tipo);
+    const unicos = [...new Set(catFiltro.map(c => c.principal))];
+    unicos.forEach(cat => sPrin.innerHTML += `<option value="${cat}">${cat}</option>`);
+    filtrarSubcategoriasCompra();
+  }
+
+  function filtrarSubcategoriasCompra() {
+    const prin = document.getElementById('comp-principal').value;
+    const tipo = document.getElementById('comp-tipo').value;
+    const sSub = document.getElementById('comp-sub');
+    sSub.innerHTML = '<option value="">Subcategoría</option>';
+    const subcats = tipo === 'Transferencia' ? c_categorias.filter(c => c.principal === prin) : c_categorias.filter(c => c.clase === tipo && c.principal === prin);
+    subcats.forEach(sub => sSub.innerHTML += `<option value="${sub.sub}">${sub.sub}</option>`);
+  }
+
+  async function guardarCompra(btn) {
+    const prod = document.getElementById('comp-productos').value.trim();
+    const t = document.getElementById('comp-tipo').value; const o = document.getElementById('comp-origen').value; const d = document.getElementById('comp-destino').value; 
+    const c = document.getElementById('comp-principal').value; const s = document.getElementById('comp-sub').value; 
+    const m = parseFloat(document.getElementById('comp-monto').value); const n = document.getElementById('comp-nota').value; const f = document.getElementById('comp-fecha').value;
+    
+    if (!prod || !o || !c || isNaN(m) || !f || (t==='Transferencia' && !d)) return alert("Faltan datos obligatorios");
+
+    const htmlOrg = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>'; btn.disabled = true;
+    try {
+      const payload = { tipo: t, origen: o, destino: d, categoria: c, subcategoria: s, monto: m, nota: n, vencimiento: f, productos: prod };
+      const res = await fetch(API_URL_COMPRAS, { method: 'POST', body: JSON.stringify({ action: "guardarCompra", datos: payload }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }});
+      const json = await res.json();
+      if (json.estado === "exito") {
+        toggleFormCompra(); cargarCompras();
+      } else alert("Error: " + json.error);
+    } catch (e) { alert("Error de red"); }
+    btn.innerHTML = htmlOrg; btn.disabled = false;
+  }
+
+  // --- RENDERIZADO Y EJECUCIÓN MULTIPLE ---
+  function renderizarCompras(compras) {
+    const contenedor = document.getElementById('lista-compras');
+    if(compras.length === 0) { 
+      contenedor.innerHTML = '<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col items-center"><i class="fas fa-shopping-basket text-4xl text-gray-200 mb-3"></i><p class="text-center text-gray-400 text-sm">Tu carrito está vacío.</p></div>'; 
+      return; 
+    }
+    
+    document.getElementById('btn-finalizar-container').classList.remove('hidden');
+
+    compras.forEach(p => {
+      let fl = p.vencimiento; try { if (fl && !fl.includes('/')) { let d=new Date(fl); if(!isNaN(d)) fl=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; } } catch(e){}
+      
+      // Creamos la tarjeta interactiva donde el clic en el div marca el checkbox
+      contenedor.innerHTML += `
+        <label class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition flex justify-between items-center gap-4 cursor-pointer select-none">
+           <input type="checkbox" value="${p.id}" class="compra-checkbox w-6 h-6 accent-emerald-600 cursor-pointer rounded">
+           <div class="flex-1 overflow-hidden">
+             <p class="font-bold text-gray-800 text-sm truncate">${p.productos}</p>
+             <p class="text-[10px] text-gray-400 mt-1">${p.categoria} ${p.subcategoria ? `• ${p.subcategoria}` : ''}</p>
+             ${fl ? `<p class="text-[10px] text-gray-400"><i class="far fa-calendar-alt mr-1"></i>Límite: ${fl}</p>` : ''}
+           </div>
+           <div class="text-right">
+             <p class="text-sm font-bold text-emerald-600">S/ ${p.monto.toFixed(2)}</p>
+             <p class="text-[10px] text-gray-400 truncate mt-1">${p.origen}</p>
+           </div>
+        </label>
+      `;
+    });
+  }
+
+  async function ejecutarComprasSeleccionadas(btn) {
+    // 1. Recolectamos todos los IDs de los checkboxes marcados
+    const checkboxes = document.querySelectorAll('.compra-checkbox:checked');
+    const idsSeleccionados = Array.from(checkboxes).map(cb => cb.value);
+    
+    if(idsSeleccionados.length === 0) return alert("Selecciona al menos un producto para comprar.");
+    
+    if(!confirm(`¿Estás seguro de registrar la compra de ${idsSeleccionados.length} elemento(s)? Se generarán las transacciones respectivas hoy.`)) return;
+
+    const htmlOrg = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Finalizando...'; btn.disabled = true;
+    
+    // Obtenemos la fecha de hoy para el registro
+    const hoy = new Date();
+    const fechaStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+    
+    try {
+      const res = await fetch(API_URL_COMPRAS, { method: 'POST', body: JSON.stringify({ action: "finalizarCompras", datos: { ids: idsSeleccionados, fechaEjecucion: fechaStr } }), headers: { 'Content-Type': 'text/plain;charset=utf-8' }});
+      const json = await res.json();
+      if(json.estado === "exito") cargarCompras(); // Recargamos para que desaparezcan los comprados
+      else alert("Error: " + json.error);
+    } catch(e) { alert("Error de red"); }
+    
+    btn.innerHTML = htmlOrg; btn.disabled = false;
+  }
+
+  // Carga inicial
+  setTimeout(cargarCompras, 100);
+</script>
